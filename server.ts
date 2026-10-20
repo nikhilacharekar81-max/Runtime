@@ -18,15 +18,6 @@ import { setupSSR } from './server/ssr.js';
 import { slugify } from './src/utils/slugify.js';
 export { siteSettings, DEFAULT_SITE_SETTINGS, isGigPublic, sanitizePublicGig };
 import { OrderFeeBreakdown } from './src/shared/fees.js';
-import {
-  SEED_USERS,
-  SEED_GIGS,
-  SEED_PROJECTS,
-  SEED_PROPOSALS,
-  SEED_ORDERS,
-  SEED_REVIEWS,
-  SEED_MESSAGES
-} from './src/data/completeSeedDataset.js';
 import { postgresStore } from './server/db/postgresStore.js';
 import {
   users,
