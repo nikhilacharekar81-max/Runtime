@@ -55,7 +55,10 @@ import {
   type Notification,
   type SiteFeeSettings,
   type WorkstreamOffer,
-  type WorkstreamOfferKind
+  type WorkstreamOfferKind,
+  type WorkstreamUploadRecord,
+  workstreamUploadIndex,
+  saveWorkstreamUploadIndex
 } from './server/store.js';
 export { auditLogs } from './server/store.js';
 export { saveOrdersToDisk } from './server/store.js';
@@ -1366,11 +1369,7 @@ export function savePayoutsToDisk() {
 export function saveProjectsToDisk() { 
   postgresStore.saveProjects(projects).catch(err => console.error('[PostgresStore] Failed to save projects:', err)); 
 }
-export function saveWorkstreamUploadIndex() { 
-  // for (const [fn, rec] of Object.entries(workstreamUploadIndex)) {
-  //   postgresStore.saveUploadRecord(fn, rec).catch(err => console.error('[PostgresStore] Failed to save upload record:', err));
-  // }
-}
+
 export function saveUsersToPostgres() {
   return postgresStore.saveUsers(users).catch(err => console.error('[PostgresStore] Failed to save users:', err));
 }
@@ -4661,15 +4660,8 @@ const WORKSTREAM_INLINE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '
 
 // Upload ownership index: filename -> who uploaded it and when. Persisted so access rules and
 // abandoned-upload cleanup survive restarts.
-interface WorkstreamUploadRecord {
-  ownerId: string;
-  originalName?: string;
-  mime?: string;
-  size?: number;
-  createdAt: string;
-  sha256?: string;
-}
-let workstreamUploadIndex: Record<string, WorkstreamUploadRecord> = {};
+// (Old implementation removed in favor of atomic helper)
+
 
 // (Old implementation removed in favor of atomic helper)
 
@@ -4776,6 +4768,7 @@ function cleanupAbandonedWorkstreamUploads() {
 
     try { fs.unlinkSync(path.join(WORKSTREAM_UPLOADS_DIR, filename)); } catch { /* already gone */ }
     delete workstreamUploadIndex[filename];
+    postgresStore.deleteUploadRecord(filename).catch(console.error);
     changed = true;
   }
 
