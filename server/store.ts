@@ -596,22 +596,6 @@ export async function cleanAllStoreData() {
   releaseCompletedOrders.clear();
   financeLedger.resetToCleanState();
 
-  const runtimeFiles = [
-    'workstream_orders.json',
-    'workstream_messages.json',
-    'workstream_projects.json',
-    'workstream_proposals.json',
-    'workstream_reviews.json',
-    'workstream_offers.json',
-    'workspaces.json',
-    'custom_invoices.json'
-  ];
-  for (const f of runtimeFiles) {
-    try {
-      fs.writeFileSync(path.join(DATA_DIR, f), '[]\n', 'utf-8');
-    } catch {}
-  }
-
   await postgresStore.cleanAllData();
-  console.log('[Store] Cleaned all demo/runtime data from memory, disk JSON, and PostgreSQL.');
+  console.log('[Store] Cleaned all demo/runtime data from memory and PostgreSQL.');
 }
