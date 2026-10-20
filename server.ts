@@ -345,6 +345,7 @@ app.post('/api/auth/signup', async (req, res) => {
     };
 
     users.push(newUser);
+    saveUsersToPostgres();
     ensureWallet(newUserId);
 
     const emailCode = generate6DigitCode();
@@ -418,6 +419,7 @@ app.post('/api/auth/verify-email', (req, res) => {
   if (user) {
     (user as any).emailVerified = true;
     user.verified = true;
+    saveUsersToPostgres();
   }
   res.json({ success: true, message: 'Email verified successfully!' });
 });
@@ -486,6 +488,7 @@ app.post('/api/auth/verify-sms', (req, res) => {
   if (user) {
     (user as any).mobileVerified = true;
     user.verified = true;
+    saveUsersToPostgres();
   }
   res.json({ success: true, message: 'Mobile verified successfully via SMS! Account is now active and usable.' });
 });
@@ -868,6 +871,7 @@ app.post('/api/auth/forgot-password/reset', (req, res) => {
 
   user.password = bcrypt.hashSync(newPassword, 10);
   user.sessionVersion = (user.sessionVersion || 1) + 1;
+  saveUsersToPostgres();
   disconnectUserSockets(user.id, 'Password reset');
   forgotPasswordCodes.delete(query);
 
@@ -2613,6 +2617,7 @@ app.patch('/api/users/availability', requireAuth, (req, res) => {
   const user = users.find(u => u.id === userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
   user.isAvailableNow = !!isAvailableNow;
+  saveUsersToPostgres();
   res.json({ success: true, user: safeUser(user) });
 });
 
@@ -2623,6 +2628,7 @@ app.post('/api/users/:id/flag', requireAdmin, (req, res) => {
 
   user.isFlagged = !user.isFlagged;
   user.flagReason = user.isFlagged ? (req.body.reason || 'Flagged for TOS investigation.') : undefined;
+  saveUsersToPostgres();
 
   registerAuditLog({
     id: 'log_' + Date.now(),
@@ -5176,6 +5182,7 @@ app.post('/api/gigs', requireAuth, (req, res) => {
     extras: req.body.extras || []
   };
   gigs.unshift(newGig);
+  saveGigsToPostgres();
   res.json(newGig);
 });
 
@@ -5369,6 +5376,8 @@ app.patch('/api/admin/gigs/:id', requireAdmin, (req, res) => {
   if (req.body.moderationStatus !== undefined) g.moderationStatus = req.body.moderationStatus;
   if (req.body.moderationNotes !== undefined) g.moderationNotes = req.body.moderationNotes;
 
+  saveGigsToPostgres();
+
   registerAuditLog({
     id: 'log_' + Date.now(),
     actor: 'Admin Chief',
@@ -5388,6 +5397,7 @@ app.patch('/api/admin/gigs/:id/status', requireAdmin, (req, res) => {
 
   const oldStatus = g.status;
   g.status = req.body.status;
+  saveGigsToPostgres();
 
   registerAuditLog({
     id: 'log_' + Date.now(),
@@ -5407,6 +5417,7 @@ app.patch('/api/admin/gigs/:id/feature', requireAdmin, (req, res) => {
   if (!g) return res.status(404).json({ error: 'Gig/Service not found' });
 
   g.featured = !g.featured;
+  saveGigsToPostgres();
 
   registerAuditLog({
     id: 'log_' + Date.now(),
@@ -5427,6 +5438,7 @@ app.delete('/api/admin/gigs/:id', requireAdmin, (req, res) => {
 
   const deleted = gigs[index];
   gigs.splice(index, 1);
+  saveGigsToPostgres();
 
   registerAuditLog({
     id: 'log_' + Date.now(),
@@ -5452,6 +5464,7 @@ app.delete('/api/gigs/:id', requireAuth, (req, res) => {
   }
 
   gigs.splice(index, 1);
+  saveGigsToPostgres();
 
   registerAuditLog({
     id: 'log_' + Date.now(),
@@ -5498,6 +5511,8 @@ app.patch('/api/gigs/:id', requireAuth, (req, res) => {
   if (req.body.moderationStatus !== undefined) g.moderationStatus = req.body.moderationStatus;
   if (req.body.moderationNotes !== undefined) g.moderationNotes = req.body.moderationNotes;
 
+  saveGigsToPostgres();
+
   registerAuditLog({
     id: 'log_' + Date.now(),
     actor: 'Freelancer / User',
@@ -5520,6 +5535,7 @@ app.patch('/api/gigs/:id/feature', requireAuth, (req, res) => {
   }
 
   g.featured = !g.featured;
+  saveGigsToPostgres();
 
   registerAuditLog({
     id: 'log_' + Date.now(),
@@ -6631,6 +6647,7 @@ app.patch('/api/admin/users/:id', requireAdmin, (req, res) => {
     timestamp: new Date().toLocaleString()
   });
 
+  saveUsersToPostgres();
   res.json(safeUser(u));
 });
 
@@ -6666,6 +6683,7 @@ app.patch('/api/admin/users/:id/status', requireAdmin, (req, res) => {
     notifyUserOnAdminAction(u, req.body.status, req.body.notes);
   }
 
+  saveUsersToPostgres();
   res.json(safeUser(u));
 });
 
@@ -6724,6 +6742,7 @@ app.patch('/api/admin/users/:id/verify', requireAdmin, (req, res) => {
     timestamp: new Date().toLocaleString()
   });
 
+  saveUsersToPostgres();
   res.json(safeUser(u));
 });
 
@@ -6752,6 +6771,9 @@ app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
   projects.length = 0;
   projects.push(...remainingProjects);
   postgresStore.saveProjects(projects);
+
+  saveUsersToPostgres();
+  saveGigsToPostgres();
 
   const admin = (req as any).authenticatedUser;
   registerAuditLog({
