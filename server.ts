@@ -7136,7 +7136,12 @@ app.get('/sitemap.xml', (_req, res) => {
 
 // SSR and Vite integration
 (async () => {
-  await hydrateStoreFromPostgres();
+  try {
+    await hydrateStoreFromPostgres();
+  } catch (err) {
+    console.error('[FATAL] Postgres hydration failed; refusing to start:', err);
+    process.exit(1);
+  }
   await setupSSR(app, IS_PROD, __dirname, () => ({ gigs, users, projects, categories }));
 
   const portArgIndex = process.argv.findIndex(arg => arg === '--port' || arg === '-p');

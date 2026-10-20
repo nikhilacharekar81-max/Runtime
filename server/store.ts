@@ -455,7 +455,7 @@ export async function hydrateStoreFromPostgres() {
   } catch (err) {
     if (isPostgresEnabled()) {
       console.error('CRITICAL: Database unreachable or migrations failed at startup:', err);
-      console.error("Hydration failed, continuing anyway");;
+      throw err;
     }
   }
 
@@ -465,7 +465,7 @@ export async function hydrateStoreFromPostgres() {
   } catch (err) {
     if (isPostgresEnabled()) {
       console.error('CRITICAL: Database is unreachable when checking initialization status:', err);
-      console.error("Hydration failed, continuing anyway");;
+      throw err;
     }
   }
 
@@ -563,7 +563,7 @@ export async function hydrateStoreFromPostgres() {
       console.log('[PostgresStore] Successfully loaded all entities into memory.');
     } catch (loadErr) {
       console.error('CRITICAL: Failed to load entities from database:', loadErr);
-      console.error("Hydration failed, continuing anyway");
+      throw loadErr;
     }
 
   for (const u of users) {
