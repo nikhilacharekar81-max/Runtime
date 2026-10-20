@@ -4645,7 +4645,6 @@ if (!fs.existsSync(WORKSTREAM_UPLOADS_DIR)) {
 }
 
 const WORKSTREAM_FILE_URL_PREFIX = '/api/workstream/files/';
-const WORKSTREAM_UPLOAD_INDEX_FILE = path.join(DATA_DIR, 'workstream_uploads.json');
 const WORKSTREAM_MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB
 const WORKSTREAM_ABANDONED_UPLOAD_TTL_MS = 24 * 3600 * 1000;
 // Allowed attachment types. Vectors (.svg) and code (.html, .js, .ts, etc.) are fully supported without restriction.
@@ -4659,6 +4658,7 @@ const WORKSTREAM_ALLOWED_EXTENSIONS = new Set([
 // .html is deliberately NOT inline: it would run uploaded scripts on the app origin. It is still fully downloadable.
 const WORKSTREAM_INLINE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf', '.svg', '.txt']);
 
+
 // Upload ownership index: filename -> who uploaded it and when. Persisted so access rules and
 // abandoned-upload cleanup survive restarts.
 interface WorkstreamUploadRecord {
@@ -4670,13 +4670,6 @@ interface WorkstreamUploadRecord {
   sha256?: string;
 }
 let workstreamUploadIndex: Record<string, WorkstreamUploadRecord> = {};
-try {
-  if (fs.existsSync(WORKSTREAM_UPLOAD_INDEX_FILE)) {
-    workstreamUploadIndex = JSON.parse(fs.readFileSync(WORKSTREAM_UPLOAD_INDEX_FILE, 'utf-8')) || {};
-  }
-} catch (err) {
-  console.error('Failed to load workstream upload index:', err);
-}
 
 // (Old implementation removed in favor of atomic helper)
 

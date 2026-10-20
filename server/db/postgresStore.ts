@@ -177,7 +177,7 @@ export class PostgresStore {
   // --- ORDERS ---
   async saveOrders(orders: Order[]): Promise<void> {
     return this.withLock('orders', async () => {
-      if (!orders || orders.length === 0) return;
+      if (!orders) return;
       const client = await this.getPool().connect();
       try {
         await client.query('BEGIN');
